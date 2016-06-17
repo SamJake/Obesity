@@ -20,8 +20,18 @@ names(obs)
 nrow(obs)
 
 names(obs) <- make.names(names(obs))
+obs <- obs[obs$States!="India",]
 obs
 
 states <- getData("GADM", country="India", level = 1)
 str(states)
 class(states)
+
+obs$NAME_1 <- obs$States
+obs
+
+
+data <- merge(obs,states,by="NAME_1")
+str(data)
+
+
