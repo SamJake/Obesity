@@ -1,10 +1,14 @@
 #install.packages("ggplot2")
 #install.packages("rvest")
-install.packages("raster")
+#install.packages("raster")
+#install.packages("sqldf")
+install.packages("mapproj")
 library(ggplot2)
 library(rvest)
 library(XML)
 library(raster)
+library(sqldf)
+library(mapproj)
 
 
 wiki <- read_html("https://en.wikipedia.org/wiki/Obesity_in_India")
@@ -13,25 +17,25 @@ wiki <- read_html("https://en.wikipedia.org/wiki/Obesity_in_India")
 
 obs <- html_nodes(wiki,"table")
 obs <- html_table(obs[[2]],fill=T)
-str(obs)
-class(obs)
-
-names(obs)
-nrow(obs)
 
 names(obs) <- make.names(names(obs))
 obs <- obs[obs$States!="India",]
-obs
-
 states <- getData("GADM", country="India", level = 1)
-str(states)
-class(states)
+states_df <- data.frame(states)
 
 obs$NAME_1 <- obs$States
-obs
+temp_st <- map_data(states)
+names(states)[6] <- "NAME_1"
+names(states)[5] <- "region"
+names(obs)[1] <- "region"
 
 
-data <- merge(obs,states,by="NAME_1")
-str(data)
+st <- sqldf("select * from temp_st join states_df using(region)")
+st$region <- st$NAME_1
 
+st <- st[,1:5]
+data1 <- merge(st,obs)
 
+g <- ggplot(data1,aes(x=long,y=lat,group=group, fill=(data1$Males....+data1$Females....)/2)) + geom_polygon(color="white")
+g <- g + scale_fill_gradient(name="Percent", low= "#feceda", high= "#c81f49", guide="colorbar", na.value = "black", breaks=pretty(x=5))
+g <- g + coord_map()
